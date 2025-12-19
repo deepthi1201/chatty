@@ -13,7 +13,7 @@ const server = http.createServer(app);
 
 // -------------------- CORS CONFIG --------------------
 const LOCAL_FRONTEND = "http://localhost:5173";
-const PROD_FRONTEND = "https://YOUR_FRONTEND_NAME.vercel.app"; // 🔥 Yahan apna real vercel URL daal dena
+const PROD_FRONTEND = "https://chatty-zkcs.vercel.app";
 
 const allowedOrigins = [LOCAL_FRONTEND, PROD_FRONTEND];
 
