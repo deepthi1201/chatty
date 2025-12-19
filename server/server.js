@@ -7,38 +7,40 @@ import userRouter from './routes/userRoutes.js';
 import messageRouter from './routes/messageRoutes.js';
 import { Server } from 'socket.io';
 
-// Create an Express app and HTTP server
+// Create Express + HTTP server
 const app = express();
 const server = http.createServer(app);
 
-// ✅ Proper CORS configuration for frontend
-const FRONTEND_URL = "http://localhost:5173";
+// -------------------- CORS CONFIG --------------------
+const LOCAL_FRONTEND = "http://localhost:5173";
+const PROD_FRONTEND = "https://YOUR_FRONTEND_NAME.vercel.app"; // 🔥 Yahan apna real vercel URL daal dena
+
+const allowedOrigins = [LOCAL_FRONTEND, PROD_FRONTEND];
+
 app.use(
   cors({
-    origin: FRONTEND_URL,
-    credentials: true, // allow cookies / auth headers
+    origin: allowedOrigins,
+    credentials: true,
   })
 );
 
-// ✅ Socket.io CORS fix
+// ------------- SOCKET.IO CORS FIX --------------------
 export const io = new Server(server, {
   cors: {
-    origin: FRONTEND_URL,
+    origin: allowedOrigins,
     credentials: true,
   },
 });
 
-// Store Online Users { userId: socketId }
+// Store Online Users
 export const userSocketMap = {};
 
-// Socket.io connection handler
 io.on("connection", (socket) => {
   const userId = socket.handshake.query.userId;
   console.log("✅ User connected:", userId);
 
   if (userId) userSocketMap[userId] = socket.id;
 
-  // Emit list of online users
   io.emit("getOnlineUsers", Object.keys(userSocketMap));
 
   socket.on("disconnect", () => {
@@ -48,21 +50,23 @@ io.on("connection", (socket) => {
   });
 });
 
-// Middleware setup
+// -------------------- MIDDLEWARES --------------------
 app.use(express.json({ limit: '4mb' }));
 
-// Routes setup
-app.use("/api/status", (req, res) => res.send("✅ Server is live!"));
+// -------------------- ROUTES --------------------
+app.get("/api/status", (req, res) => res.send("✅ Server is live!"));
 app.use("/api/auth", userRouter);
 app.use("/api/messages", messageRouter);
 app.use("/api/user", userRouter);
 
-// Connect to MongoDB
+// -------------------- DB CONNECT --------------------
 await connectDB();
-if(process.env.NODE_ENV !== "production"){
+
+// -------------------- LOCAL RUN ONLY --------------------
+if (process.env.NODE_ENV !== "production") {
   const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`Server is running on PORT: ${PORT}`));
+  server.listen(PORT, () => console.log(`🚀 Server running on PORT: ${PORT}`));
 }
 
-//export server for vercel
+// -------------------- EXPORT FOR VERCEL --------------------
 export default server;
